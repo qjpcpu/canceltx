@@ -1,3 +1,12 @@
+# 安装
+
+```
+wget https://raw.githubusercontent.com/qjpcpu/canceltx/master/release/canceltx.mac -O canceltx
+wget https://raw.githubusercontent.com/qjpcpu/canceltx/master/release/canceltx.linux -O canceltx
+```
+
+# 用法
+
 ```
 NAME:
    canceltx - 取消挂起的交易
