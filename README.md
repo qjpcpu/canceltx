@@ -1,3 +1,4 @@
+```
 NAME:
    canceltx - 取消挂起的交易
 
@@ -23,3 +24,4 @@ GLOBAL OPTIONS:
    --node value     节点地址 (default: "https://api.myetherapi.com/eth")
    --help, -h       show help
    --version, -v    print the version
+```
