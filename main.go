@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
@@ -35,15 +36,19 @@ func main() {
 		},
 		cli.Uint64Flag{
 			Name:  "gas",
-			Usage: "本次使用多少gas price Gwei(为0则自动计算)",
+			Usage: "本次出价的GasPrice单位Gwei(为0则自动计算)",
+		},
+		cli.StringFlag{
+			Name:  "tx",
+			Usage: "交易hash(--nonce和--tx参数任选其一)",
 		},
 		cli.Float64Flag{
 			Name:  "eth",
-			Usage: "捐赠多少ETH",
+			Usage: "捐赠多少ETH(可选)",
 		},
 		cli.Uint64Flag{
 			Name:  "finney",
-			Usage: "捐赠finney",
+			Usage: "捐赠finney(可选)",
 		},
 		cli.StringFlag{
 			Name:  "node",
@@ -68,10 +73,6 @@ func cancelTx(c *cli.Context) error {
 		fmt.Println("请指定私钥")
 		return nil
 	}
-	if nonce == 0 {
-		fmt.Println("请指定nonce")
-		return nil
-	}
 	pk, err := key.StringToPrivateKey(private_str)
 	if err != nil {
 		fmt.Println("解析私钥失败", err)
@@ -89,6 +90,18 @@ func cancelTx(c *cli.Context) error {
 		return err
 	}
 	fmt.Println("连接到节点:", node)
+	if txhash := c.String("tx"); txhash != "" {
+		tx, _, err := conn.TransactionByHash(context.Background(), common.HexToHash(txhash))
+		if err != nil {
+			fmt.Printf("查找tx失败:%v\n", err)
+			return err
+		}
+		nonce = tx.Nonce()
+	}
+	if nonce == 0 {
+		fmt.Println("请指定nonce")
+		return nil
+	}
 	var amount *big.Int
 	if c.Float64("eth") > 0 {
 		amount = new(big.Int)
