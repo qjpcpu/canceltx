@@ -5,6 +5,12 @@ wget https://raw.githubusercontent.com/qjpcpu/canceltx/master/release/canceltx.m
 wget https://raw.githubusercontent.com/qjpcpu/canceltx/master/release/canceltx.linux -O canceltx
 ```
 
+# 示例
+
+```
+canceltx --tx 0x71b6d84be19b1cee9c1a81c48fda97843ace6f47f06c4f1a961288a951f87abf --private xxxxxx  --finney 2
+```
+
 # 用法
 
 ```
