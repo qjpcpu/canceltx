@@ -1,12 +1,12 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/howeyc/gopass"
 	"github.com/qjpcpu/ethereum/contracts"
 	"github.com/qjpcpu/ethereum/key"
 	"github.com/urfave/cli"
@@ -14,7 +14,6 @@ import (
 	"math/big"
 	"net/url"
 	"os"
-	"strings"
 )
 
 const donate_address = "0xE35f3e2A93322b61e5D8931f806Ff38F4a4F4D88"
@@ -98,10 +97,14 @@ func cancelTx(c *cli.Context) error {
 			fmt.Println("读取私钥json文件失败", err)
 			return nil
 		}
-		reader := bufio.NewReader(os.Stdin)
 		fmt.Print("请输入私钥密码: ")
-		keypwd, _ = reader.ReadString('\n')
-		keypwd = strings.TrimSuffix(keypwd, "\n")
+		input, err := gopass.GetPasswdMasked()
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+		fmt.Println("")
+		keypwd = string(input)
 	} else {
 		pk, err := key.StringToPrivateKey(private_str)
 		if err != nil {
