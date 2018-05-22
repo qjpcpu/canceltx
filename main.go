@@ -53,7 +53,6 @@ func main() {
 		cli.StringFlag{
 			Name:  "node",
 			Usage: "节点地址",
-			Value: "https://api.myetherapi.com/eth",
 		},
 	}
 	app.Action = func(c *cli.Context) error {
@@ -66,6 +65,9 @@ func main() {
 
 func cancelTx(c *cli.Context) error {
 	node := c.String("node")
+	if node == "" {
+		node = "https://mainnet.infura.io/pNwyFqB0rCSVcjbhB8gb"
+	}
 	private_str := c.String("private")
 	nonce := c.Uint64("nonce")
 	gasPrice := c.Uint64("gas")
