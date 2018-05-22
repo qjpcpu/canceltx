@@ -67,9 +67,7 @@ func main() {
 	app.Action = func(c *cli.Context) error {
 		return cancelTx(c)
 	}
-	if err := app.Run(os.Args); err != nil {
-		fmt.Println(err)
-	}
+	app.Run(os.Args)
 }
 
 func cancelTx(c *cli.Context) error {
