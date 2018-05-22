@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
@@ -9,8 +10,11 @@ import (
 	"github.com/qjpcpu/ethereum/contracts"
 	"github.com/qjpcpu/ethereum/key"
 	"github.com/urfave/cli"
+	"io/ioutil"
 	"math/big"
+	"net/url"
 	"os"
+	"strings"
 )
 
 const donate_address = "0xE35f3e2A93322b61e5D8931f806Ff38F4a4F4D88"
@@ -19,6 +23,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "canceltx"
 	app.Usage = "取消挂起的交易"
+	app.Description = "使用示例: canceltx --tx 0x18cfb36f94be03b3aa2ceb468370cf9931e51ac6f110dfa5284e41a8bf5e80b7 --private fej789678976"
 	app.Authors = []cli.Author{
 		cli.Author{
 			Name:  "JasonQu",
@@ -26,6 +31,10 @@ func main() {
 		},
 	}
 	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:  "tx",
+			Usage: "交易hash(--nonce和--tx参数任选其一)",
+		},
 		cli.Uint64Flag{
 			Name:  "nonce",
 			Usage: "需要取消的交易nonce",
@@ -34,13 +43,13 @@ func main() {
 			Name:  "private",
 			Usage: "私钥",
 		},
+		cli.StringFlag{
+			Name:  "file",
+			Usage: "私钥key json文件",
+		},
 		cli.Uint64Flag{
 			Name:  "gas",
 			Usage: "本次出价的GasPrice单位Gwei(为0则自动计算)",
-		},
-		cli.StringFlag{
-			Name:  "tx",
-			Usage: "交易hash(--nonce和--tx参数任选其一)",
 		},
 		cli.Float64Flag{
 			Name:  "eth",
@@ -48,7 +57,8 @@ func main() {
 		},
 		cli.Uint64Flag{
 			Name:  "finney",
-			Usage: "捐赠finney(可选)",
+			Usage: "捐赠finney",
+			Value: 2,
 		},
 		cli.StringFlag{
 			Name:  "node",
@@ -68,30 +78,50 @@ func cancelTx(c *cli.Context) error {
 	if node == "" {
 		node = "https://mainnet.infura.io/pNwyFqB0rCSVcjbhB8gb"
 	}
-	private_str := c.String("private")
 	nonce := c.Uint64("nonce")
 	gasPrice := c.Uint64("gas")
+
+	// get auth
+	var keyjson []byte
+	var keypwd string
+	var from common.Address
+	private_str := c.String("private")
 	if private_str == "" {
-		fmt.Println("请指定私钥")
-		return nil
-	}
-	pk, err := key.StringToPrivateKey(private_str)
-	if err != nil {
-		fmt.Println("解析私钥失败", err)
-		return err
-	}
-	keypwd := "123456"
-	from, keyjson, err := key.ImportPrivateKey(pk, keypwd, keystore.StandardScryptN, keystore.StandardScryptP)
-	if err != nil {
-		fmt.Println("导入私钥失败", err)
-		return err
+		keyfile := c.String("file")
+		if keyfile == "" {
+			fmt.Println("请指定私钥json文件")
+			return nil
+		}
+		var err error
+		keyjson, err = ioutil.ReadFile(keyfile)
+		if err != nil {
+			fmt.Println("读取私钥json文件失败", err)
+			return nil
+		}
+		reader := bufio.NewReader(os.Stdin)
+		fmt.Print("请输入私钥密码: ")
+		keypwd, _ = reader.ReadString('\n')
+		keypwd = strings.TrimSuffix(keypwd, "\n")
+	} else {
+		pk, err := key.StringToPrivateKey(private_str)
+		if err != nil {
+			fmt.Println("解析私钥失败", err)
+			return err
+		}
+		keypwd = "123456"
+		from, keyjson, err = key.ImportPrivateKey(pk, keypwd, keystore.StandardScryptN, keystore.StandardScryptP)
+		if err != nil {
+			fmt.Println("导入私钥失败", err)
+			return err
+		}
 	}
 	conn, err := ethclient.Dial(node)
 	if err != nil {
 		fmt.Printf("连接到节点%s失败:%v\n", node, err)
 		return err
 	}
-	fmt.Println("连接到节点:", node)
+	uri, _ := url.Parse(node)
+	fmt.Println("连接到节点:", uri.Hostname())
 	if txhash := c.String("tx"); txhash != "" {
 		tx, _, err := conn.TransactionByHash(context.Background(), common.HexToHash(txhash))
 		if err != nil {
